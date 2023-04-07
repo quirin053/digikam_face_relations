@@ -10,6 +10,7 @@ import networkx as nx
 import pandas as pd
 import math
 import pyvis.network as net
+import webbrowser
 
 load_dotenv()
 dk = Digikam('sqlite:///' + os.getenv('DATABASE_PATH'))
@@ -112,7 +113,8 @@ def draw_connections(Menschen,mainp,secondp):
     nt = net.Network(notebook=True)
     nt.from_nx(G)
     nt.show_buttons(filter_=['physics'])
-    nt.show("test.html")
+    nt.show("relations.html")
+    webbrowser.open("relations.html",new=2)
 
 
 # GUI
