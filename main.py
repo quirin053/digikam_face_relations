@@ -122,7 +122,7 @@ root = tk.Tk()
 combo = ttk.Combobox(root, values=[m.name for m in Menschen])
 combo.pack()
 
-button1 = tk.Button(root, text="draw for this person")
+button1 = tk.Button(root, text="draw for selected person")
 button1.pack()
 
 button1.bind("<Button-1>", lambda button: Menschen[combo.current()].count_connections(ptags))

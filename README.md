@@ -9,3 +9,5 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 You need to add your Digikam-Database path to the `.env` file `DATABASE_PATH = /path/to/your/database/digikam4.db`
+## Usage
+When you run the script `python main.py`, it will open a small window with the option to either draw a graph of the most common faces in your picture collection `draw for all persons` or you can select a person and draw a graph of the most common faces that appear together with this person `draw for selected person`. Additionally, you can select `draw connections` to gat a network graph of the most common faces. You can specify the number of "root" faces (first input box) and the number of "child" faces (second input box). The faces are sorted according to how often they appear.
