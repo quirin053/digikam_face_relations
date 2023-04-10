@@ -97,7 +97,7 @@ def draw_all(Menschen):
     alle.draw_barchart(Menschen)
 
 
-def draw_connections(Menschen,mainp,secondp):
+def draw_connections(Menschen,mainp,secondp): # TODO Draw connections between all people that are considered
     Menschen = Menschen[:mainp]
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
     for m in Menschen:
@@ -116,17 +116,52 @@ def draw_connections(Menschen,mainp,secondp):
     nt.show("relations.html")
     webbrowser.open("relations.html",new=2)
 
+class connection_rec:
+    def __init__(self, dataframe, number):
+        self.df = dataframe
+        self.number = number
+
+def selected_connections(roots,con):
+    if con.number > 0:
+        cMenschen = []
+        for root in roots:
+            root.count_connections(ptags, False) # TODO in count_connections standardmäßig nicht zeichnen, zeinchnen in separate Funktion auslagern
+            ccMenschen = [[root, Personentag(k, dk.tags[k].name, v)] for k, v in root.connections.items()]
+            cMenschen.extend(ccMenschen)
+        cMenschen.sort(key=lambda x: x[1].anzahl, reverse=True)
+        i = 0
+        while con.number > 0 and i < len(cMenschen):
+            con.df = pd.concat([pd.DataFrame({'source': cMenschen[i][0].name, 'target': cMenschen[i][1].name, 'type': 'undirected', 'weight': math.log(cMenschen[i][1].anzahl)}, index=[0]),con.df], ignore_index=True)
+            con.number -= 1
+            i += 1
+        if con.number > 0:
+            # call function again with the secend element of each element in cMenschen
+            roots = [x[1] for x in cMenschen]
+            selected_connections(roots,con)
+    return
+
+def draw_selected_connections(root,number):
+    df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
+    connections = connection_rec(df,number)
+    roots = [root]
+    selected_connections(roots,connections)
+    G = nx.from_pandas_edgelist(connections.df, source='source', target='target', edge_attr='weight')    
+    nt = net.Network(notebook=True)
+    nt.from_nx(G)
+    # nt.show_buttons(filter_=['physics'])
+    nt.show("relations.html")
+    webbrowser.open("relations.html",new=2)
 
 # GUI
 root = tk.Tk()
 combo = ttk.Combobox(root, values=[m.name for m in Menschen])
 combo.pack()
 
-button1 = tk.Button(root, text="draw for selected person")
+button1 = tk.Button(root, text="draw for selected")
 button1.pack()
 
 button1.bind("<Button-1>", lambda button: Menschen[combo.current()].count_connections(ptags))
-button2 = tk.Button(root, text="draw for all persons")
+button2 = tk.Button(root, text="draw for all")
 button2.bind("<Button-1>", lambda button: draw_all(Menschen))
 button2.pack()
 button3 = tk.Button(root, text="draw connections")
@@ -139,5 +174,12 @@ secondp.pack()
 button3.pack()
 
 button3.bind("<Button-1>", lambda button: draw_connections(Menschen,int(mainp.get()),int(secondp.get())))
+
+entry3 = tk.Entry(root)
+entry3.pack()
+button4 = tk.Button(root, text="connections for selected")
+button4.pack()
+button4.bind("<Button-1>", lambda button: draw_selected_connections(Menschen[combo.current()],int(entry3.get())))
 root.mainloop()
 
+# TODO cutoff: add filter to only show for people with more than x images
