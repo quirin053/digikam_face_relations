@@ -38,7 +38,7 @@ class Personentag:
         plt.title(self.name + " (" + str(self.anzahl) + ")")
         plt.show()
 
-    def count_connections(self,ptags,drawing=True):
+    def count_connections(self,ptags,filter=1,drawing=True):
         print("count connections for " + self.name)
         # dictionary with the number of images and the other person id
         
@@ -64,8 +64,8 @@ class Personentag:
         print(f"Dauer der Operation: {duration} Sekunden")
 
 
-        # delete all elements in connections with value = 0 and exclude the person itself
-        self.connections = {k: v for k, v in self.connections.items() if v != 0 and k != self.id}
+        # delete all elements in connections with value < filter and exclude the person itself
+        self.connections = {k: v for k, v in self.connections.items() if v >= filter and k != self.id}
         print(self.connections)
 
         cMenschen = [Personentag(k, dk.tags[k].name, v) for k, v in self.connections.items()]
@@ -84,11 +84,10 @@ for x in range (2,len(ptags)):
     Menschen.append(Personentag(ptags[x].id, ptags[x].name, z))
 Menschen.sort(key=lambda x: x.anzahl, reverse=True)
 
-def draw_all(Menschen):
+def draw_all(Menschen,filter):
     print("draw all")
     # draw a bar chat with the number of images per person
-    # delete all elements in Menschen with anzahl < 10
-    Menschen = [m for m in Menschen if m.anzahl > 10]
+    Menschen = [m for m in Menschen if m.anzahl > filter]
     # sort the list by anzahl
     Menschen.sort(key=lambda x: x.anzahl, reverse=True)
     # only the first 20 elements
@@ -97,12 +96,12 @@ def draw_all(Menschen):
     alle.draw_barchart(Menschen)
 
 
-def draw_connections(Menschen,mainp,secondp): # TODO Draw connections between all people that are considered
+def draw_connections(Menschen,mainp,secondp,filter): # TODO Draw connections between all people that are considered
     Menschen = Menschen[:mainp]
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
     for m in Menschen:
         m.count_connections(ptags,False)
-        cMenschen = [Personentag(k, dk.tags[k].name, v) for k, v in m.connections.items()]
+        cMenschen = [Personentag(k, dk.tags[k].name, v) for k, v in m.connections.items() if v >=filter]
         cMenschen.sort(key=lambda x: x.anzahl, reverse=True)
         # only the first 20 elements
         cMenschen = cMenschen[:secondp]
@@ -121,12 +120,12 @@ class connection_rec:
         self.df = dataframe
         self.number = number
 
-def selected_connections(roots,con):
+def selected_connections(roots,con,filter):
     if con.number > 0:
         cMenschen = []
         for root in roots:
-            root.count_connections(ptags, False) # TODO in count_connections standardmäßig nicht zeichnen, zeinchnen in separate Funktion auslagern
-            ccMenschen = [[root, Personentag(k, dk.tags[k].name, v)] for k, v in root.connections.items()]
+            root.count_connections(ptags, False) # TODO in count_connections standardmäßig nicht zeichnen, zeichnen in separate Funktion auslagern
+            ccMenschen = [[root, Personentag(k, dk.tags[k].name, v)] for k, v in root.connections.items() if v >= filter]
             cMenschen.extend(ccMenschen)
         cMenschen.sort(key=lambda x: x[1].anzahl, reverse=True)
         i = 0
@@ -137,14 +136,14 @@ def selected_connections(roots,con):
         if con.number > 0:
             # call function again with the secend element of each element in cMenschen
             roots = [x[1] for x in cMenschen]
-            selected_connections(roots,con)
+            selected_connections(roots,con,filter)
     return
 
-def draw_selected_connections(root,number):
+def draw_selected_connections(root,number,filter):
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
     connections = connection_rec(df,number)
     roots = [root]
-    selected_connections(roots,connections)
+    selected_connections(roots,connections,filter)
     G = nx.from_pandas_edgelist(connections.df, source='source', target='target', edge_attr='weight')    
     nt = net.Network(notebook=True)
     nt.from_nx(G)
@@ -154,32 +153,40 @@ def draw_selected_connections(root,number):
 
 # GUI
 root = tk.Tk()
-combo = ttk.Combobox(root, values=[m.name for m in Menschen])
+combo = ttk.Combobox(root, values=[m.name for m in Menschen], state="readonly")
+combo.current(0)
 combo.pack()
-
+entry4 = tk.Entry(root)
+entry4.insert(0, "5")
 button1 = tk.Button(root, text="draw for selected")
 button1.pack()
 
-button1.bind("<Button-1>", lambda button: Menschen[combo.current()].count_connections(ptags))
+button1.bind("<Button-1>", lambda button: Menschen[combo.current()].count_connections(ptags,int(entry4.get())))
 button2 = tk.Button(root, text="draw for all")
-button2.bind("<Button-1>", lambda button: draw_all(Menschen))
+button2.bind("<Button-1>", lambda button: draw_all(Menschen,int(entry4.get())))
 button2.pack()
 button3 = tk.Button(root, text="draw connections")
 
 
 mainp = tk.Entry(root)
+mainp.insert(0, "10")
 mainp.pack()
 secondp = tk.Entry(root)
+secondp.insert(0, "10")
 secondp.pack()
 button3.pack()
 
-button3.bind("<Button-1>", lambda button: draw_connections(Menschen,int(mainp.get()),int(secondp.get())))
+button3.bind("<Button-1>", lambda button: draw_connections(Menschen,int(mainp.get()),int(secondp.get()),int(entry4.get())))
 
 entry3 = tk.Entry(root)
+entry3.insert(0, "20")
 entry3.pack()
 button4 = tk.Button(root, text="connections for selected")
 button4.pack()
-button4.bind("<Button-1>", lambda button: draw_selected_connections(Menschen[combo.current()],int(entry3.get())))
+button4.bind("<Button-1>", lambda button: draw_selected_connections(Menschen[combo.current()],int(entry3.get()),int(entry4.get())))
+
+
+entry4.pack()
 root.mainloop()
 
 # TODO cutoff: add filter to only show for people with more than x images
