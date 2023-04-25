@@ -2,8 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from dotenv import load_dotenv
 import networkx as nx
-import pandas as pd
-import math
 import pyvis.network as net
 import webbrowser
 
@@ -25,4 +23,14 @@ class Bar_Chart:
         plt.title(self.title + " (" + str(self.anzahl) + ")")
         plt.show()
 
-# class Connection_Graph:
+class Connection_Graph:
+    def __init__(self, data):
+        self.data = data
+        G = nx.from_pandas_edgelist(self.data, source='source', target='target', edge_attr='weight')
+        self.nt = net.Network(notebook=True)
+        self.nt.from_nx(G)
+
+    def show(self, buttons=False):
+        if buttons: self.nt.show_buttons()
+        self.nt.show("relations.html")
+        webbrowser.open("relations.html",new=2)

@@ -4,11 +4,8 @@ import os
 import time
 import tkinter as tk
 from tkinter import ttk
-import networkx as nx
 import pandas as pd
 import math
-import pyvis.network as net
-import webbrowser
 import viz
 
 load_dotenv()
@@ -84,7 +81,7 @@ def draw_all(Menschen,filter):
     bc.show()
 
 
-def draw_connections(Menschen,mainp,secondp,filter): # TODO Draw connections between all people that are considered
+def draw_connections(Menschen,mainp,secondp,filter,buttons): # TODO Draw connections between all people that are considered
     Menschen = Menschen[:mainp]
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
     for m in Menschen:
@@ -95,13 +92,8 @@ def draw_connections(Menschen,mainp,secondp,filter): # TODO Draw connections bet
         cMenschen = cMenschen[:secondp]
         for c in cMenschen:
             df = pd.concat([pd.DataFrame({'source': m.name, 'target': c.name, 'type': 'undirected', 'weight': math.log(c.anzahl)}, index=[0]),df], ignore_index=True)
-    G = nx.from_pandas_edgelist(df, source='source', target='target', edge_attr='weight')
-    
-    nt = net.Network(notebook=True)
-    nt.from_nx(G)
-    # nt.show_buttons(filter_=['physics'])
-    nt.show("relations.html")
-    webbrowser.open("relations.html",new=2)
+    cg = viz.Connection_Graph(df)
+    cg.show(buttons)
 
 class connection_rec:
     def __init__(self, dataframe, number):
@@ -127,17 +119,13 @@ def selected_connections(roots,con,filter):
             selected_connections(roots,con,filter)
     return
 
-def draw_selected_connections(root,number,filter):
+def draw_selected_connections(root,number,filter,buttons):
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
     connections = connection_rec(df,number)
     roots = [root]
     selected_connections(roots,connections,filter)
-    G = nx.from_pandas_edgelist(connections.df, source='source', target='target', edge_attr='weight')    
-    nt = net.Network(notebook=True)
-    nt.from_nx(G)
-    # nt.show_buttons(filter_=['physics'])
-    nt.show("relations.html")
-    webbrowser.open("relations.html",new=2)
+    cg = viz.Connection_Graph(connections.df)
+    cg.show(buttons)
 
 # GUI
 root = tk.Tk()
@@ -163,17 +151,17 @@ secondp = tk.Entry(root)
 secondp.insert(0, "10")
 secondp.pack()
 button3.pack()
+show_buttons = tk.BooleanVar()
+cb_buttons = tk.Checkbutton(root, text="Graph Buttons", variable=show_buttons, onvalue=True, offvalue=False)
 
-button3.bind("<Button-1>", lambda button: draw_connections(Menschen,int(mainp.get()),int(secondp.get()),int(entry4.get())))
+button3.bind("<Button-1>", lambda button: draw_connections(Menschen,int(mainp.get()),int(secondp.get()),int(entry4.get()),show_buttons.get()))
 
 entry3 = tk.Entry(root)
 entry3.insert(0, "20")
 entry3.pack()
 button4 = tk.Button(root, text="connections for selected")
-button4.bind("<Button-1>", lambda button: draw_selected_connections(Menschen[combo.current()],int(entry3.get()),int(entry4.get())))
+button4.bind("<Button-1>", lambda button: draw_selected_connections(Menschen[combo.current()],int(entry3.get()),int(entry4.get()),show_buttons.get()))
 button4.pack()
-
-
 entry4.pack()
+cb_buttons.pack()
 root.mainloop()
-# TODO checkbox for graph physics
