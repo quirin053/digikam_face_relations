@@ -1,6 +1,4 @@
 from digikamdb import Digikam
-import matplotlib.pyplot as plt
-import numpy as np
 from dotenv import load_dotenv
 import os
 import time
@@ -11,6 +9,7 @@ import pandas as pd
 import math
 import pyvis.network as net
 import webbrowser
+import viz
 
 load_dotenv()
 dk = Digikam('sqlite:///' + os.getenv('DATABASE_PATH'))
@@ -26,19 +25,17 @@ class Personentag:
         self.name = name
         self.anzahl = anzahl
 
-    def draw_barchart(self, Menschen):
-        # draw a bar chat with the number of images per person
-        x = np.arange(len(Menschen))
-        plt.bar(x, [m.anzahl for m in Menschen])
-        plt.bar_label(plt.bar(x, [m.anzahl for m in Menschen]), padding=3)
-        # bottom space for the x labels
-        plt.subplots_adjust(bottom=0.27)
-        plt.xticks(x, [m.name for m in Menschen], rotation=90)
-        # display the total number of images for this person in the title
-        plt.title(self.name + " (" + str(self.anzahl) + ")")
-        plt.show()
+    def draw_barchart(self, ptags,filter=1):
+        self.count_connections(ptags,filter)
+        
+        cMenschen = [Personentag(k, dk.tags[k].name, v) for k, v in self.connections.items()]
+        cMenschen.sort(key=lambda x: x.anzahl, reverse=True)
+        cMenschen = cMenschen[:21]
 
-    def count_connections(self,ptags,filter=1,drawing=False):
+        bc = viz.Bar_Chart(cMenschen, self.anzahl, self.name)
+        bc.show()
+
+    def count_connections(self,ptags,filter=1):
         print("count connections for " + self.name)
         # dictionary with the number of images and the other person id
         
@@ -68,15 +65,6 @@ class Personentag:
         self.connections = {k: v for k, v in self.connections.items() if v >= filter and k != self.id}
         print(self.connections)
 
-        cMenschen = [Personentag(k, dk.tags[k].name, v) for k, v in self.connections.items()]
-        cMenschen.sort(key=lambda x: x.anzahl, reverse=True)
-        # only the first 20 elements
-        cMenschen = cMenschen[:21]
-        if drawing:
-            self.draw_barchart(cMenschen)
-
-
-
 
 Menschen = []
 for x in range (2,len(ptags)):
@@ -92,16 +80,16 @@ def draw_all(Menschen,filter):
     Menschen.sort(key=lambda x: x.anzahl, reverse=True)
     # only the first 20 elements
     Menschen = Menschen[:20]
-    alle = Personentag(4, "alle", len(dk.images.select().all()))
-    alle.draw_barchart(Menschen)
+    bc = viz.Bar_Chart(Menschen, len(dk.images.select().all()), "Alle")
+    bc.show()
 
 
 def draw_connections(Menschen,mainp,secondp,filter): # TODO Draw connections between all people that are considered
     Menschen = Menschen[:mainp]
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
     for m in Menschen:
-        m.count_connections(ptags)
-        cMenschen = [Personentag(k, dk.tags[k].name, v) for k, v in m.connections.items() if v >=filter]
+        m.count_connections(ptags,filter)
+        cMenschen = [Personentag(k, dk.tags[k].name, v) for k, v in m.connections.items()]
         cMenschen.sort(key=lambda x: x.anzahl, reverse=True)
         # only the first 20 elements
         cMenschen = cMenschen[:secondp]
@@ -124,8 +112,8 @@ def selected_connections(roots,con,filter):
     if con.number > 0:
         cMenschen = []
         for root in roots:
-            root.count_connections(ptags) # TODO in count_connections zeichnen in separate Funktion auslagern
-            ccMenschen = [[root, Personentag(k, dk.tags[k].name, v)] for k, v in root.connections.items() if v >= filter]
+            root.count_connections(ptags,filter)
+            ccMenschen = [[root, Personentag(k, dk.tags[k].name, v)] for k, v in root.connections.items()]
             cMenschen.extend(ccMenschen)
         cMenschen.sort(key=lambda x: x[1].anzahl, reverse=True)
         i = 0
@@ -161,7 +149,7 @@ entry4.insert(0, "5")
 button1 = tk.Button(root, text="draw for selected")
 button1.pack()
 
-button1.bind("<Button-1>", lambda button: Menschen[combo.current()].count_connections(ptags,filter=int(entry4.get()),drawing=True))
+button1.bind("<Button-1>", lambda button: Menschen[combo.current()].draw_barchart(ptags,filter=int(entry4.get())))
 button2 = tk.Button(root, text="draw all")
 button2.bind("<Button-1>", lambda button: draw_all(Menschen,int(entry4.get())))
 button2.pack()
@@ -182,8 +170,8 @@ entry3 = tk.Entry(root)
 entry3.insert(0, "20")
 entry3.pack()
 button4 = tk.Button(root, text="connections for selected")
-button4.pack()
 button4.bind("<Button-1>", lambda button: draw_selected_connections(Menschen[combo.current()],int(entry3.get()),int(entry4.get())))
+button4.pack()
 
 
 entry4.pack()
