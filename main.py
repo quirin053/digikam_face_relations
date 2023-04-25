@@ -38,7 +38,7 @@ class Personentag:
         plt.title(self.name + " (" + str(self.anzahl) + ")")
         plt.show()
 
-    def count_connections(self,ptags,filter=1,drawing=True):
+    def count_connections(self,ptags,filter=1,drawing=False):
         print("count connections for " + self.name)
         # dictionary with the number of images and the other person id
         
@@ -100,7 +100,7 @@ def draw_connections(Menschen,mainp,secondp,filter): # TODO Draw connections bet
     Menschen = Menschen[:mainp]
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
     for m in Menschen:
-        m.count_connections(ptags,False)
+        m.count_connections(ptags)
         cMenschen = [Personentag(k, dk.tags[k].name, v) for k, v in m.connections.items() if v >=filter]
         cMenschen.sort(key=lambda x: x.anzahl, reverse=True)
         # only the first 20 elements
@@ -111,7 +111,7 @@ def draw_connections(Menschen,mainp,secondp,filter): # TODO Draw connections bet
     
     nt = net.Network(notebook=True)
     nt.from_nx(G)
-    nt.show_buttons(filter_=['physics'])
+    # nt.show_buttons(filter_=['physics'])
     nt.show("relations.html")
     webbrowser.open("relations.html",new=2)
 
@@ -124,7 +124,7 @@ def selected_connections(roots,con,filter):
     if con.number > 0:
         cMenschen = []
         for root in roots:
-            root.count_connections(ptags, False) # TODO in count_connections standardmäßig nicht zeichnen, zeichnen in separate Funktion auslagern
+            root.count_connections(ptags) # TODO in count_connections zeichnen in separate Funktion auslagern
             ccMenschen = [[root, Personentag(k, dk.tags[k].name, v)] for k, v in root.connections.items() if v >= filter]
             cMenschen.extend(ccMenschen)
         cMenschen.sort(key=lambda x: x[1].anzahl, reverse=True)
@@ -161,8 +161,8 @@ entry4.insert(0, "5")
 button1 = tk.Button(root, text="draw for selected")
 button1.pack()
 
-button1.bind("<Button-1>", lambda button: Menschen[combo.current()].count_connections(ptags,int(entry4.get())))
-button2 = tk.Button(root, text="draw for all")
+button1.bind("<Button-1>", lambda button: Menschen[combo.current()].count_connections(ptags,filter=int(entry4.get()),drawing=True))
+button2 = tk.Button(root, text="draw all")
 button2.bind("<Button-1>", lambda button: draw_all(Menschen,int(entry4.get())))
 button2.pack()
 button3 = tk.Button(root, text="draw connections")
@@ -188,5 +188,4 @@ button4.bind("<Button-1>", lambda button: draw_selected_connections(Menschen[com
 
 entry4.pack()
 root.mainloop()
-
-# TODO cutoff: add filter to only show for people with more than x images
+# TODO checkbox for graph physics
