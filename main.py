@@ -6,6 +6,7 @@ import gui
 import pandas as pd
 import math
 import viz
+import people
 
 load_dotenv()
 dk = Digikam('sqlite:///' + os.getenv('DATABASE_PATH'))
