@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-def build(Menschen,draw_all,ptags,draw_connections,draw_selected_connections):
+def build(Menschen,draw_all,draw_selected,ptags,draw_connections,draw_selected_connections):
     # GUI
     root = tk.Tk()
     root.title("Digikam Face Ralations")
@@ -20,7 +20,7 @@ def build(Menschen,draw_all,ptags,draw_connections,draw_selected_connections):
     comboAppearances = ttk.Combobox(tabAppearances, values=[m.name for m in Menschen], state="readonly")
     comboAppearances.current(0)
     button_draw = tk.Button(tabAppearances, text="draw for selected")
-    button_draw.bind("<Button-1>", lambda button: Menschen[comboAppearances.current()].draw_barchart(ptags,filter=int(cutoffAppearances.get())))
+    button_draw.bind("<Button-1>", lambda button: draw_selected(Menschen,Menschen.get_by_index(comboAppearances.current()).id,filter=int(cutoffAppearances.get())))
     button_drawall = tk.Button(tabAppearances, text="draw all")
     button_drawall.bind("<Button-1>", lambda button: draw_all(Menschen,int(cutoffAppearances.get())))
     cutoffAppearances = tk.Entry(tabAppearances)

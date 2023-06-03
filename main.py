@@ -6,7 +6,7 @@ import gui
 import pandas as pd
 import math
 import viz
-import people
+import people as pl
 
 load_dotenv()
 dk = Digikam('sqlite:///' + os.getenv('DATABASE_PATH'))
@@ -15,6 +15,13 @@ dk = Digikam('sqlite:///' + os.getenv('DATABASE_PATH'))
 personen = dk.tags[4]
 ptags = [t for t in dk.tags if t in personen]
 
+# create people object
+people = pl.People(dk)
+for p in ptags[2:]:
+    people.add_person(pl.Person(p.id, p.name, len(p.images.all())))
+
+for k in people:
+    print(k.name + " " + str(k.anzahl))
 
 class Personentag:
     def __init__(self,id, name, anzahl):
@@ -69,15 +76,20 @@ for x in range (2,len(ptags)):
     Menschen.append(Personentag(ptags[x].id, ptags[x].name, z))
 Menschen.sort(key=lambda x: x.anzahl, reverse=True)
 
-def draw_all(Menschen,filter):
+def draw_all(people,filter=1):
     print("draw all")
     # draw a bar chat with the number of images per person
+    Menschen = [people.get_person(p) for p in people.get_most('all',20)]
     Menschen = [m for m in Menschen if m.anzahl > filter]
-    # sort the list by anzahl
-    Menschen.sort(key=lambda x: x.anzahl, reverse=True)
-    # only the first 20 elements
-    Menschen = Menschen[:20]
-    bc = viz.Bar_Chart(Menschen, len(dk.images.select().all()), "Alle")
+    data = [[m.name, m.anzahl] for m in Menschen]
+    bc = viz.Bar_Chart(data, len(dk.images.select().all()), "Alle")
+    bc.show()
+
+def draw_selected(people,id,filter=1):
+    connections = people.get_most(id,20)
+    Menschen = [[people.get_person(p[0]), p[1]] for p in connections]
+    data = [[m[0].name, m[1]] for m in Menschen if m[1] > filter]
+    bc = viz.Bar_Chart(data, people.get_person(id).anzahl, people.get_person(id).name)
     bc.show()
 
 
@@ -127,5 +139,5 @@ def draw_selected_connections(root,number,filter,buttons):
     cg = viz.Connection_Graph(connections.df)
     cg.show(buttons)
 
-root = gui.build(Menschen,draw_all,ptags,draw_connections,draw_selected_connections)
+root = gui.build(people,draw_all,draw_selected,ptags,draw_connections,draw_selected_connections)
 root.mainloop()

@@ -1,4 +1,4 @@
-from digikamdb import Digikam
+# from digikamdb import Digikam
 # Identifier (id) for a person is the tag id
 class Person:
     def __init__(self,id, name, anzahl):
@@ -19,9 +19,10 @@ class People:
         self.person_dict = {}
         self.most = []
         self.dk = dk
+        self.indexmap = {}
 
-    def __iter__(self): # TODO
-        return iter(self.person_dict)
+    def __iter__(self):
+        return iter(self.person_dict.values())
     
     def add_person(self, person):
         self.person_dict[person.id] = person
@@ -29,6 +30,14 @@ class People:
     def get_person(self, n):
         if n in self.person_dict:
             return self.person_dict[n]
+        else:
+            return 
+        
+    def get_by_index(self, index):
+        if len(self.indexmap) == 0:
+            self.indexmap = {i: id for i, id in enumerate(self.person_dict.keys())}
+        if index in self.indexmap:
+            return self.person_dict[self.indexmap[index]]
         else:
             return None
     
@@ -49,8 +58,8 @@ class People:
             self.person_dict[p].add_connection(id, count)
 
     def get_connections(self, id):
-        if self.person_dict[id].connections == {}:
-            self.count_connections(id, self.dk)
+        if len(self.person_dict[id].connections) <= len(self.person_dict):
+            self.count_connections(id)
         return self.person_dict[id].get_connections()
 
     def get_most(self, id, n):
@@ -61,6 +70,7 @@ class People:
                     most.append([p,person.anzahl])
                 most.sort(key=lambda x: x[1], reverse=True)
                 self.most = [m[0] for m in most]
+            # returns a list of ids for the n most common persons
             return self.most[:n]
         else:
             if len(self.person_dict[id].most) == 0:
@@ -68,5 +78,6 @@ class People:
                 for p, count in self.get_connections(id).items():
                     most.append([p,count])
                 most.sort(key=lambda x: x[1], reverse=True)
-                self.person_dict[id].most = [m[0] for m in most]
+                self.person_dict[id].most = most
+            # returns a list of [id, count] for the n most connected persons
             return self.person_dict[id].most[:n]
