@@ -17,6 +17,7 @@ ptags = [t for t in dk.tags if t in personen]
 
 # create people object
 people = pl.People(dk)
+#  -> people init?
 for p in ptags[2:]:
     people.add_person(pl.Person(p.id, p.name, len(p.images.all())))
 
@@ -93,17 +94,34 @@ def draw_selected(people,id,filter=1):
     bc.show()
 
 
-def draw_connections(Menschen,mainp,secondp,filter,buttons): # TODO Draw connections between all people that are considered
-    Menschen = Menschen[:mainp]
+def draw_connections(people,mainp,secondp,filter=1,buttons=False):
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
+    edges = people.edges
+    # collect persons that will be on the graph
+    Menschen = people.get_most('all',mainp)
+    Menschen = [m for m in Menschen if people.get_person(m).anzahl > filter]
+    cMenschen = set(Menschen)
     for m in Menschen:
-        m.count_connections(ptags,filter)
-        cMenschen = [Personentag(k, dk.tags[k].name, v) for k, v in m.connections.items()]
-        cMenschen.sort(key=lambda x: x.anzahl, reverse=True)
-        # only the first 20 elements
-        cMenschen = cMenschen[:secondp]
-        for c in cMenschen:
-            df = pd.concat([pd.DataFrame({'source': m.name, 'target': c.name, 'type': 'undirected', 'weight': math.log(c.anzahl)}, index=[0]),df], ignore_index=True)
+        for p in people.get_most(m,secondp):
+            if p[1] > filter:
+                cMenschen.add(p[0])
+
+    dMenschen = cMenschen.copy()
+    for c in cMenschen:
+        dMenschen.remove(c)
+        for d in dMenschen:
+            if not (c in edges):
+                edges[c] = {}
+            if not (d in edges[c]):
+                cd = people.get_connections(c)[d]
+                edges[c][d] = cd
+            if cd >= 1:
+                df = pd.concat([pd.DataFrame({'source': people.get_person(c).name,
+                                                'target': people.get_person(d).name,
+                                                'type': 'undirected',
+                                                'weight': math.log(cd)},
+                                                index=[0]),df], ignore_index=True)
+    people.edges = edges
     cg = viz.Connection_Graph(df)
     cg.show(buttons)
 

@@ -20,6 +20,7 @@ class People:
         self.most = []
         self.dk = dk
         self.indexmap = {}
+        self.edges = {} # will maybe be moved
 
     def __iter__(self):
         return iter(self.person_dict.values())
