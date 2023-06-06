@@ -63,16 +63,15 @@ class People:
             self.count_connections(id)
         return self.person_dict[id].get_connections()
 
-    def get_most(self, id, n):
+    def get_most(self, id, n=0, filter=1):
         if id == 'all':
             if len(self.most) == 0:
                 most = []
                 for p, person in self.person_dict.items():
                     most.append([p,person.anzahl])
                 most.sort(key=lambda x: x[1], reverse=True)
-                self.most = [m[0] for m in most]
-            # returns a list of ids for the n most common persons
-            return self.most[:n]
+                self.most = most
+            result = self.most
         else:
             if len(self.person_dict[id].most) == 0:
                 most = []
@@ -80,5 +79,10 @@ class People:
                     most.append([p,count])
                 most.sort(key=lambda x: x[1], reverse=True)
                 self.person_dict[id].most = most
-            # returns a list of [id, count] for the n most connected persons
-            return self.person_dict[id].most[:n]
+            result = self.person_dict[id].most
+        # returns a list of [id, count] with count >= filter and the first n entries
+        # returns all entries if n == 0
+        result = [m for m in result if m[1] >= filter]
+        if n > 0:
+            result = result[:n]
+        return result

@@ -80,16 +80,15 @@ Menschen.sort(key=lambda x: x.anzahl, reverse=True)
 def draw_all(people,filter=1):
     print("draw all")
     # draw a bar chat with the number of images per person
-    Menschen = [people.get_person(p) for p in people.get_most('all',20)]
-    Menschen = [m for m in Menschen if m.anzahl > filter]
-    data = [[m.name, m.anzahl] for m in Menschen]
+    Menschen = [[people.get_person(p[0]).name,p[1]] for p in people.get_most('all',20,filter)]
+    data = [[m[0], m[1]] for m in Menschen]
     bc = viz.Bar_Chart(data, len(dk.images.select().all()), "Alle")
     bc.show()
 
 def draw_selected(people,id,filter=1):
-    connections = people.get_most(id,20)
+    connections = people.get_most(id,20,filter)
     Menschen = [[people.get_person(p[0]), p[1]] for p in connections]
-    data = [[m[0].name, m[1]] for m in Menschen if m[1] > filter]
+    data = [[m[0].name, m[1]] for m in Menschen]
     bc = viz.Bar_Chart(data, people.get_person(id).anzahl, people.get_person(id).name)
     bc.show()
 
@@ -98,8 +97,8 @@ def draw_connections(people,mainp,secondp,filter=1,buttons=False):
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
     edges = people.edges
     # collect persons that will be on the graph
-    Menschen = people.get_most('all',mainp)
-    Menschen = [m for m in Menschen if people.get_person(m).anzahl > filter]
+    Menschen = people.get_most('all',n=mainp,filter=filter)
+    Menschen = [m[0] for m in Menschen]
     cMenschen = set(Menschen)
     for m in Menschen:
         for p in people.get_most(m,secondp):
@@ -115,17 +114,17 @@ def draw_connections(people,mainp,secondp,filter=1,buttons=False):
             if not (d in edges[c]):
                 cd = people.get_connections(c)[d]
                 edges[c][d] = cd
-            if cd >= 1:
+            if edges[c][d] >= 1:
                 df = pd.concat([pd.DataFrame({'source': people.get_person(c).name,
                                                 'target': people.get_person(d).name,
                                                 'type': 'undirected',
-                                                'weight': math.log(cd)},
+                                                'weight': math.log(edges[c][d])},
                                                 index=[0]),df], ignore_index=True)
     people.edges = edges
     cg = viz.Connection_Graph(df)
     cg.show(buttons)
 
-class connection_rec:
+class edge_rec:
     def __init__(self, dataframe, number):
         self.df = dataframe
         self.number = number
@@ -149,9 +148,9 @@ def selected_connections(roots,con,filter):
             selected_connections(roots,con,filter)
     return
 
-def draw_selected_connections(root,number,filter,buttons):
+def draw_selected_connections(root,size,filter=1,buttons=False):
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
-    connections = connection_rec(df,number)
+    connections = edge_rec(df,size)
     roots = [root]
     selected_connections(roots,connections,filter)
     cg = viz.Connection_Graph(connections.df)

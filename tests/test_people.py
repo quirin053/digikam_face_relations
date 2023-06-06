@@ -7,22 +7,22 @@ class TestPeople(unittest.TestCase):
         self.max_m = pl.Person(3, "Max Mustermann", 42)
         self.sabine_m = pl.Person(5, "Sabine Mustermann", 23)
         self.people = pl.People('dk_placeholder')
-
-    def test_add_get_person(self):
         self.people.add_person(self.max_m)
         self.people.add_person(self.sabine_m)
-        result = [self.people.get_person(1), self.people.get_person(2)]
+
+    
+    def test_add_get_person(self):
+        people = pl.People('dk_placeholder')
+        people.add_person(self.max_m)
+        people.add_person(self.sabine_m)
+        result = [self.people.get_person(3), self.people.get_person(5)]
         self.assertEqual(result, [self.max_m, self.sabine_m])
 
     def test_people_iter(self):
-        self.people.add_person(self.max_m)
-        self.people.add_person(self.sabine_m)
         result = [p for p in self.people]
         self.assertEqual(result, [self.max_m, self.sabine_m])
 
     def test_get_by_index(self):
-        self.people.add_person(self.max_m)
-        self.people.add_person(self.sabine_m)
         result = [self.people.get_by_index(0), self.people.get_by_index(1)]
         self.assertEqual(result, [self.max_m, self.sabine_m])
 
