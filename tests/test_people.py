@@ -18,6 +18,10 @@ class TestPeople(unittest.TestCase):
         result = [self.people.get_person(3), self.people.get_person(5)]
         self.assertEqual(result, [self.max_m, self.sabine_m])
 
+    def test_iterable(self):
+        result = [p for p in self.people]
+        self.assertEqual(result, [self.max_m, self.sabine_m])
+
     def test_people_iter(self):
         result = [p for p in self.people]
         self.assertEqual(result, [self.max_m, self.sabine_m])

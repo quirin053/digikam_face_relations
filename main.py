@@ -93,20 +93,12 @@ def draw_selected(people,id,filter=1):
     bc.show()
 
 
-def draw_connections(people,mainp,secondp,filter=1,buttons=False):
-    df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
+def create_connection_graph(people,Menschen,buttons=False):
+    # calculate edges
     edges = people.edges
-    # collect persons that will be on the graph
-    Menschen = people.get_most('all',n=mainp,filter=filter)
-    Menschen = [m[0] for m in Menschen]
-    cMenschen = set(Menschen)
-    for m in Menschen:
-        for p in people.get_most(m,secondp):
-            if p[1] > filter:
-                cMenschen.add(p[0])
-
-    dMenschen = cMenschen.copy()
-    for c in cMenschen:
+    df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
+    dMenschen = Menschen.copy()
+    for c in Menschen:
         dMenschen.remove(c)
         for d in dMenschen:
             if not (c in edges):
@@ -121,40 +113,46 @@ def draw_connections(people,mainp,secondp,filter=1,buttons=False):
                                                 'weight': math.log(edges[c][d])},
                                                 index=[0]),df], ignore_index=True)
     people.edges = edges
+    # draw graph
     cg = viz.Connection_Graph(df)
     cg.show(buttons)
-
-class edge_rec:
-    def __init__(self, dataframe, number):
-        self.df = dataframe
-        self.number = number
-
-def selected_connections(roots,con,filter):
-    if con.number > 0:
-        cMenschen = []
-        for root in roots:
-            root.count_connections(ptags,filter)
-            ccMenschen = [[root, Personentag(k, dk.tags[k].name, v)] for k, v in root.connections.items()]
-            cMenschen.extend(ccMenschen)
-        cMenschen.sort(key=lambda x: x[1].anzahl, reverse=True)
-        i = 0
-        while con.number > 0 and i < len(cMenschen):
-            con.df = pd.concat([pd.DataFrame({'source': cMenschen[i][0].name, 'target': cMenschen[i][1].name, 'type': 'undirected', 'weight': math.log(cMenschen[i][1].anzahl)}, index=[0]),con.df], ignore_index=True)
-            con.number -= 1
-            i += 1
-        if con.number > 0:
-            # call function again with the secend element of each element in cMenschen
-            roots = [x[1] for x in cMenschen]
-            selected_connections(roots,con,filter)
     return
 
-def draw_selected_connections(root,size,filter=1,buttons=False):
+def draw_connections(people,mainp,secondp,filter=1,buttons=False):
     df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
-    connections = edge_rec(df,size)
-    roots = [root]
-    selected_connections(roots,connections,filter)
-    cg = viz.Connection_Graph(connections.df)
-    cg.show(buttons)
+    edges = people.edges
+    # collect persons that will be on the graph
+    Menschen = people.get_most('all',n=mainp,filter=filter)
+    Menschen = [m[0] for m in Menschen]
+    cMenschen = set(Menschen)
+    for m in Menschen:
+        for p in people.get_most(m,secondp):
+            if p[1] > filter:
+                cMenschen.add(p[0])
+    # calculate edges and draw graph
+    create_connection_graph(people,cMenschen,buttons)
+
+def selected_connections(people,roots,depth,filter=1):
+    # for all roots, get_most and add ids to list Menschen
+    print("depth: %d" % depth)
+    depth -= 1
+    if len(people) == len(roots):
+        return roots
+    for r in roots.copy():
+        print("root: %s" % people.get_person(r).name)
+        add = [p[0] for p in people.get_most(r,filter=filter)]
+        roots.update(add)
+    if depth > 0:
+        return selected_connections(people,roots,depth,filter)
+    return roots
+
+def draw_selected_connections(people,root,depth,filter=1,buttons=False):
+    # collect persons that will be on the graph
+    Menschen = set([root.id])
+    Menschen = selected_connections(people,Menschen,depth,filter)
+    # calculate edges and draw graph
+    create_connection_graph(people,Menschen,buttons)
+
 
 root = gui.build(people,draw_all,draw_selected,ptags,draw_connections,draw_selected_connections)
 root.mainloop()

@@ -49,11 +49,11 @@ def build(Menschen,draw_all,draw_selected,ptags,draw_connections,draw_selected_c
     show_buttons = tk.BooleanVar()
     cb_buttons = tk.Checkbutton(tabConnections, text="Graph Buttons", variable=show_buttons, onvalue=True, offvalue=False)
     button_drawconnections.bind("<Button-1>", lambda button: draw_connections(Menschen,int(mainp.get()),int(secondp.get()),int(cutoffConnections.get()),show_buttons.get()))
-    entry_graphsize = tk.Entry(tabConnections)
-    entry_graphsize.insert(0, "20")
-    graphsizeLabel = tk.Label(tabConnections, text="Graph Size:")
+    entry_graphdepth = tk.Entry(tabConnections)
+    entry_graphdepth.insert(0, "2")
+    graphdepthLabel = tk.Label(tabConnections, text="Graph Depth:")
     button_connectionsSelected = tk.Button(tabConnections, text="connections for selected")
-    button_connectionsSelected.bind("<Button-1>", lambda button: draw_selected_connections(Menschen[comboConnections.current()],int(entry_graphsize.get()),int(cutoffConnections.get()),show_buttons.get()))
+    button_connectionsSelected.bind("<Button-1>", lambda button: draw_selected_connections(Menschen,Menschen.get_by_index(comboConnections.current()),int(entry_graphdepth.get()),int(cutoffConnections.get()),show_buttons.get()))
 
     mainpLabel.grid(row=0, column=0)
     mainp.grid(row=0, column=1)
@@ -64,8 +64,8 @@ def build(Menschen,draw_all,draw_selected,ptags,draw_connections,draw_selected_c
     cb_buttons.grid(row=3, column=0, columnspan=2)
     button_drawconnections.grid(row=4, column=0, columnspan=2)
     comboConnections.grid(row=5, column=0, columnspan=2)
-    graphsizeLabel.grid(row=6, column=0)
-    entry_graphsize.grid(row=6, column=1)
+    graphdepthLabel.grid(row=6, column=0)
+    entry_graphdepth.grid(row=6, column=1)
     button_connectionsSelected.grid(row=7, column=0, columnspan=2)
 
     # Tab History

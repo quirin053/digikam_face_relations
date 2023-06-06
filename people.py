@@ -25,6 +25,9 @@ class People:
     def __iter__(self):
         return iter(self.person_dict.values())
     
+    def __len__(self):
+        return len(self.person_dict)
+    
     def add_person(self, person):
         self.person_dict[person.id] = person
 
