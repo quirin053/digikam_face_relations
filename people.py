@@ -28,6 +28,9 @@ class People:
     def __len__(self):
         return len(self.person_dict)
     
+    def __getitem__(self, id):
+        return self.person_dict[id]
+    
     def add_person(self, person):
         self.person_dict[person.id] = person
 

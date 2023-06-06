@@ -12,7 +12,7 @@ load_dotenv()
 dk = Digikam('sqlite:///' + os.getenv('DATABASE_PATH'))
 
 # get all face tags
-personen = dk.tags[4]
+personen = dk.tags[4] # TODO unbekannt & unbestätigt rausfiltern
 ptags = [t for t in dk.tags if t in personen]
 
 # create people object
@@ -21,61 +21,9 @@ people = pl.People(dk)
 for p in ptags[2:]:
     people.add_person(pl.Person(p.id, p.name, len(p.images.all())))
 
-for k in people:
-    print(k.name + " " + str(k.anzahl))
+# for k in people:
+#     print(k.name + " " + str(k.anzahl))
 
-class Personentag:
-    def __init__(self,id, name, anzahl):
-        self.id = id
-        self.name = name
-        self.anzahl = anzahl
-
-    def draw_barchart(self, ptags,filter=1):
-        self.count_connections(ptags,filter)
-        
-        cMenschen = [Personentag(k, dk.tags[k].name, v) for k, v in self.connections.items()]
-        cMenschen.sort(key=lambda x: x.anzahl, reverse=True)
-        cMenschen = cMenschen[:21]
-
-        bc = viz.Bar_Chart(cMenschen, self.anzahl, self.name)
-        bc.show()
-
-    def count_connections(self,ptags,filter=1):
-        print("count connections for " + self.name)
-        # dictionary with the number of images and the other person id
-        
-        self.connections = {}
-        # get all images with this person
-        images2 = dk.tags[self.id].images.all()
-        start_time = time.time()
-        # count connections
-        for p in ptags:
-            images1 = dk.tags[p.id].images.all()
-            count = 0
-            one = True if len(images1) < len(images2) else False
-            short = images1 if one else images2.copy()
-            long = images2.copy() if one else images1
-            for i in short:
-                if i in long:
-                    count += 1
-                    long.remove(i)
-            self.connections.update({p.id: count})
-
-        end_time = time.time()
-        duration = end_time - start_time
-        print(f"Dauer der Operation: {duration} Sekunden")
-
-
-        # delete all elements in connections with value < filter and exclude the person itself
-        self.connections = {k: v for k, v in self.connections.items() if v >= filter and k != self.id}
-        print(self.connections)
-
-
-Menschen = []
-for x in range (2,len(ptags)):
-    z = len(ptags[x].images.all())
-    Menschen.append(Personentag(ptags[x].id, ptags[x].name, z))
-Menschen.sort(key=lambda x: x.anzahl, reverse=True)
 
 def draw_all(people,filter=1):
     print("draw all")
@@ -132,19 +80,22 @@ def draw_connections(people,mainp,secondp,filter=1,buttons=False):
     # calculate edges and draw graph
     create_connection_graph(people,cMenschen,buttons)
 
-def selected_connections(people,roots,depth,filter=1):
+def selected_connections(people,roots,depth,filter=1,prev_len=0):
     # for all roots, get_most and add ids to list Menschen
+    # if cutoff is set to 0 by user input, all connections are added
     print("depth: %d" % depth)
     depth -= 1
-    if len(people) == len(roots):
-        return roots
-    for r in roots.copy():
+    croots = roots.copy()
+    for r in croots:
         print("root: %s" % people.get_person(r).name)
         add = [p[0] for p in people.get_most(r,filter=filter)]
         roots.update(add)
+    if len(roots) == prev_len:
+        return roots
     if depth > 0:
-        return selected_connections(people,roots,depth,filter)
+        return selected_connections(people,roots,depth,filter,len(roots))
     return roots
+    # TODO Abbruchkriterium, falls keine neuen Personen hinzukommen
 
 def draw_selected_connections(people,root,depth,filter=1,buttons=False):
     # collect persons that will be on the graph
