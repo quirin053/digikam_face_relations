@@ -4,3 +4,4 @@ lib/
 .env
 Testpictures/
 *.code-workspace
+ignore/

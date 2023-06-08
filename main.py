@@ -67,8 +67,6 @@ def create_connection_graph(people,Menschen,buttons=False):
     return
 
 def draw_connections(people,mainp,secondp,filter=1,buttons=False):
-    df = pd.DataFrame(columns=['source', 'target', 'type', 'weight'])
-    edges = people.edges
     # collect persons that will be on the graph
     Menschen = people.get_most('all',n=mainp,filter=filter)
     Menschen = [m[0] for m in Menschen]
@@ -95,7 +93,6 @@ def selected_connections(people,roots,depth,filter=1,prev_len=0):
     if depth > 0:
         return selected_connections(people,roots,depth,filter,len(roots))
     return roots
-    # TODO Abbruchkriterium, falls keine neuen Personen hinzukommen
 
 def draw_selected_connections(people,root,depth,filter=1,buttons=False):
     # collect persons that will be on the graph
