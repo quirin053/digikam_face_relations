@@ -2,7 +2,7 @@ from digikamdb import Digikam
 from dotenv import load_dotenv
 import os
 import time
-import gui
+import simplegui
 import pandas as pd
 import math
 import viz
@@ -102,5 +102,8 @@ def draw_selected_connections(people,root,depth,filter=1,buttons=False):
     create_connection_graph(people,Menschen,buttons)
 
 
-root = gui.build(people,draw_all,draw_selected,ptags,draw_connections,draw_selected_connections)
-root.mainloop()
+actions = {'draw_all': draw_all,'draw_selected': draw_selected,
+            'draw_connections': draw_connections,
+            'draw_selected_connections': draw_selected_connections}
+window = simplegui.GUI(people,actions)
+window.run()
