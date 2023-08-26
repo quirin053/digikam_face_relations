@@ -3,5 +3,6 @@ matplotlib>=3.5.3
 networkx>=3.1
 numpy>=1.22.3
 pandas>=1.4.3
+PySimpleGUI>=4.60.5
 python-dotenv>=1.0.0
 pyvis>=0.3.2
